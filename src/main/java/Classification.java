@@ -1,17 +1,13 @@
 import java.awt.*;
-import java.io.File;
-import java.util.List;
 import java.util.Random;
 
 import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.evaluation.Evaluation;
-import weka.classifiers.evaluation.Prediction;
 import weka.classifiers.lazy.IBk;
 import weka.classifiers.trees.J48;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.Utils;
-import weka.core.converters.CSVLoader;
 import weka.core.converters.ConverterUtils.DataSource;
 import weka.gui.treevisualizer.PlaceNode2;
 import weka.gui.treevisualizer.TreeVisualizer;
@@ -32,8 +28,8 @@ public class Classification {
         //Standardize
         /*Standardize filter = new Standardize();
         filter.setInputFormat(train);  // initializing the filter once with training set
-        Instances trainset = Filter.useFilter(trainset, filter);  // configures the Filter based on train instances and returns filtered instances
-        Instances testset = Filter.useFilter(testset, filter);    // create new test set*/
+        Instances trainSet = Filter.useFilter(trainSet, filter);  // configures the Filter based on train instances and returns filtered instances
+        Instances testSet = Filter.useFilter(testSet, filter);    // create new test set*/
 
         TreeClassifierBuild(trainSet,testSet);
         NaiveBayesClassifierBuild(trainSet,testSet);
@@ -62,14 +58,14 @@ public class Classification {
     private static void kNNClassifierBuild(Instances trainSet, Instances testSet) throws Exception {
         System.out.print("-----------------------------kNN-CLASSIFIER--------------------------------\n");
 
-        Evaluation Test = new Evaluation(trainSet);
+        Evaluation eval = new Evaluation(trainSet);
         IBk classifier = new IBk();
         classifier.setOptions(weka.core.Utils.splitOptions("-K 1"));
         classifier.buildClassifier(trainSet);
         System.out.print(classifier.toString());
 
-        Test.evaluateModel(classifier, testSet);
-        System.out.println(Test.toSummaryString());
+        eval.evaluateModel(classifier, testSet);
+        System.out.println(eval.toSummaryString());
 
 
         System.out.print("*******************************************************************\n");
@@ -79,19 +75,26 @@ public class Classification {
             System.out.print("Actual: " + testSet.classAttribute().value((int) testSet.instance(j).classValue()));
             System.out.println(", predicted: " + testSet.classAttribute().value((int) res));
         }
+        int k = 0;
+        for (Instance instance : testSet) {
+            double actual = instance.classValue();
+            double prediction = eval.evaluateModelOnce(classifier, instance);
+            System.out.printf("%2d.%4.0f%4.0f", ++k, actual, prediction);
+            System.out.println(prediction != actual? " *": "");
+        }
     }
 
     private static void TreeClassifierBuild(Instances trainSet, Instances testSet) throws Exception {
         System.out.print("-----------------------------TREE-CLASSIFIER-------------------------------\n");
 
-        Evaluation Test = new Evaluation(trainSet);
+        Evaluation eval = new Evaluation(trainSet);
         J48 classifier = new J48();
         classifier.setOptions(Utils.splitOptions("-C 0.1"));
         classifier.buildClassifier(trainSet);
         System.out.print(classifier.toString());
 
-        Test.evaluateModel(classifier, testSet);
-        System.out.println(Test.toSummaryString());
+        eval.evaluateModel(classifier, testSet);
+        System.out.println(eval.toSummaryString());
 
         System.out.print("*******************************************************************\n");
         for (int j = 0; j < testSet.numInstances(); ++j) {
@@ -100,6 +103,13 @@ public class Classification {
             //System.out.print("ID: " + testSet.instance(j).value(0));
             System.out.print("Actual: " + testSet.classAttribute().value((int) testSet.instance(j).classValue()));
             System.out.println(", predicted: " + testSet.classAttribute().value((int) res));
+        }
+        int k = 0;
+        for (Instance instance : testSet) {
+            double actual = instance.classValue();
+            double prediction = eval.evaluateModelOnce(classifier, instance);
+            System.out.printf("%2d.%4.0f%4.0f", ++k, actual, prediction);
+            System.out.println(prediction != actual? " *": "");
         }
         visualizeTree(classifier);
     }

@@ -21,26 +21,28 @@ import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
 import org.nd4j.linalg.learning.config.Sgd;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-
 public class dl4jClassification {
+    private static final int labelIndex = 50;     //сколько значений в каждой строке CSV-файла
+    private static final int numClasses = 10;     //сколько классов в наборе данных
+    private static final int batchSize = 6;    //сколько всего примеров
+    private static final int numInputs = 50;  //колво-нейронов входной слой
+    private static final int numHiddenLayers = 5; //колво-нейронов скрытый слой
+    private static final int numOutput = 10;  //колво-нейронов выходной слой
+    private static final int nEpoch = 1000;
+    private static final long seed = 6;
+
     public static void main(String[] args) throws Exception {
         RecordReader recordReader = new CSVRecordReader(1, ',');
         recordReader.initialize(new FileSplit(
                     new ClassPathResource("setDL.csv").getFile()));
 
-        int labelIndex = 50;     //5 значений в каждой строке CSV-файла
-        int numClasses = 10;     //3 класса (типы цветов ириса) в наборе данных ириса.
-        int batchSize = 6;    //Набор данных Iris: всего 150 примеров.
-
         //DataSetIterator управляет обходом набора данных и подготовкой данные для нейронной сети.
         DataSetIterator iterator = new RecordReaderDataSetIterator(recordReader,batchSize,labelIndex,numClasses);
         DataSet allData = iterator.next();
         //перетасовать набор данных, чтобы избавиться от порядка классов в исходном файле
-        allData.shuffle(42);
+        allData.shuffle(123);
         //Разделяем выборку на тестовую и обучающую в соответсвии 75% на обучение
-        SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.75);
+        SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.5);
         //получаем выборки
         DataSet trainingData = testAndTrain.getTrain();
         DataSet testData = testAndTrain.getTest();
@@ -54,9 +56,7 @@ public class dl4jClassification {
         // Применяем нормализацию к тестовым данным
         normalizer.transform(testData);
 
-        final int numInputs = 50;  //колво-нейронов входной слой
-        int outputNum = 10;  //колво-нейронов выходной слой
-        long seed = 6;
+
 
         //ПОСТРОЕНИЕ МОДЕЛИ
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
@@ -66,14 +66,14 @@ public class dl4jClassification {
                 .updater(new Sgd(0.1))
                 .l2(1e-4)
                 .list()
-                .layer(0, new DenseLayer.Builder().nIn(numInputs).nOut(3)
+                .layer(0, new DenseLayer.Builder().nIn(numInputs).nOut(numHiddenLayers)
                         .build())
-                .layer(1, new DenseLayer.Builder().nIn(3).nOut(3)
+                .layer(1, new DenseLayer.Builder().nIn(numHiddenLayers).nOut(numHiddenLayers)
                         .build())
                 .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
         //Переопределить глобальную активацию TANH с помощью softmax для этого слоя
                         .activation(Activation.SOFTMAX)
-                        .nIn(3).nOut(outputNum).build())
+                        .nIn(numHiddenLayers).nOut(numOutput).build())
                 .build();
 
         //Инициализация модели
@@ -82,7 +82,7 @@ public class dl4jClassification {
         // записываем оценку один раз каждые 100 итераций
         model.setListeners(new ScoreIterationListener(100));
 
-        for(int i=0; i<1000; i++ ) {
+        for(int i=0; i<nEpoch; i++ ) {
             model.fit(trainingData);
         }
                //оцениваем модель на тестовом наборе
@@ -93,11 +93,11 @@ public class dl4jClassification {
 
         System.out.println(eval.stats()); //confusion matrix, evaluation metrics
         System.out.println("-----------------------------------");
-        System.out.println(eval.getLabelsList());//список классов
-        System.out.println("-----------------------------------");
         System.out.println(eval.confusionToString());
         System.out.println("-----------------------------------");
         System.out.println(output);
-
+        System.out.println("-----------------------------------");
+        for(int i = 0;i<output.rows();i++)
+            System.out.println((i+1)+". Actual: " + testData.get(i).outcome() + "  Predicted: " + output.getRow(i).argMax());
     }
 }
