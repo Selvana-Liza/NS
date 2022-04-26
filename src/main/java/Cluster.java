@@ -78,7 +78,7 @@ public class Cluster {
 
         EM cluster = new EM();
         cluster.setOptions(weka.core.Utils.splitOptions("-I 100"));   // set the options
-        //cluster.setNumClusters(3);
+        cluster.setNumClusters(9);
         cluster.buildClusterer(dataClusterer);
 
         ClusterEvaluation eval = new ClusterEvaluation();
@@ -91,11 +91,12 @@ public class Cluster {
     public static void kMeansClusterBuild(Instances dataClusterer, Instances data) throws Exception {
         System.out.println("-------------------------KMeans-cluster-----------------------\n");
 
-        SimpleKMeans model = new SimpleKMeans();
-        model.buildClusterer(dataClusterer);
+        SimpleKMeans cluster = new SimpleKMeans();
+        cluster.setNumClusters(9);
+        cluster.buildClusterer(dataClusterer);
 
         ClusterEvaluation eval = new ClusterEvaluation();
-        eval.setClusterer(model);                                   // the cluster to evaluate
+        eval.setClusterer(cluster);                                   // the cluster to evaluate
         eval.evaluateClusterer(data);                                // data to evaluate the clusterer on
         System.out.println("# of clusters: " + eval.getNumClusters());  // output # of clusters
         System.out.println(eval.clusterResultsToString());
@@ -104,11 +105,11 @@ public class Cluster {
     public static void CobwebClusterBuild(Instances dataClusterer, Instances data) throws Exception {
         System.out.println("-------------------------Cobweb-cluster-----------------------\n");
 
-        Cobweb cw = new Cobweb();
-        cw.buildClusterer(dataClusterer);
+        Cobweb cluster = new Cobweb();
+        cluster.buildClusterer(dataClusterer);
 
         ClusterEvaluation eval = new ClusterEvaluation();
-        eval.setClusterer(cw);                                   // the cluster to evaluate
+        eval.setClusterer(cluster);                                   // the cluster to evaluate
         eval.evaluateClusterer(data);                                // data to evaluate the clusterer on
         System.out.println("# of clusters: " + eval.getNumClusters());  // output # of clusters
         System.out.println(eval.clusterResultsToString());

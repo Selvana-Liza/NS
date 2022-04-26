@@ -24,7 +24,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 public class dl4jClassification {
     private static final int labelIndex = 50;     //сколько значений в каждой строке CSV-файла
     private static final int numClasses = 10;     //сколько классов в наборе данных
-    private static final int batchSize = 6;    //сколько всего примеров
+    private static final int batchSize = 133;    //сколько всего примеров
     private static final int numInputs = 50;  //колво-нейронов входной слой
     private static final int numHiddenLayers = 5; //колво-нейронов скрытый слой
     private static final int numOutput = 10;  //колво-нейронов выходной слой
@@ -42,7 +42,7 @@ public class dl4jClassification {
         //перетасовать набор данных, чтобы избавиться от порядка классов в исходном файле
         allData.shuffle(123);
         //Разделяем выборку на тестовую и обучающую в соответсвии 75% на обучение
-        SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.5);
+        SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.75);
         //получаем выборки
         DataSet trainingData = testAndTrain.getTrain();
         DataSet testData = testAndTrain.getTest();
@@ -97,7 +97,11 @@ public class dl4jClassification {
         System.out.println("-----------------------------------");
         System.out.println(output);
         System.out.println("-----------------------------------");
-        for(int i = 0;i<output.rows();i++)
-            System.out.println((i+1)+". Actual: " + testData.get(i).outcome() + "  Predicted: " + output.getRow(i).argMax());
+        for(int i = 0;i<output.rows();i++) {
+            String actual = String.valueOf(testData.get(i).outcome());
+            String prediction = String.valueOf(output.getRow(i).argMax());
+            System.out.printf((i+1) + ". Actual: " + actual + "  Predicted: " + prediction);
+            System.out.println(!prediction.equals(actual) ? " *" : "");
+        }
     }
 }
