@@ -2,6 +2,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.Random;
 
+import org.nd4j.linalg.api.ops.impl.transforms.custom.Standardize;
 import weka.classifiers.Classifier;
 import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.evaluation.Evaluation;
@@ -11,6 +12,7 @@ import weka.core.CapabilitiesIgnorer;
 import weka.core.Instances;
 import weka.core.Utils;
 import weka.core.converters.CSVLoader;
+import weka.filters.Filter;
 import weka.gui.treevisualizer.PlaceNode2;
 import weka.gui.treevisualizer.TreeVisualizer;
 
@@ -29,12 +31,6 @@ public class Classification {
 
         trainSet = new Instances(data, 0, 100);
         testSet = new Instances(data, 100, 33);
-
-        //Standardize
-        /*Standardize filter = new Standardize();
-        filter.setInputFormat(train);  // initializing the filter once with training set
-        Instances trainSet = Filter.useFilter(trainSet, filter);  // configures the Filter based on train instances and returns filtered instances
-        Instances testSet = Filter.useFilter(testSet, filter);    // create new test set*/
 
         TreeClassifierBuild();
         NaiveBayesClassifierBuild();
