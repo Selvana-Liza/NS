@@ -2,6 +2,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.Random;
 
+import weka.classifiers.Classifier;
 import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.evaluation.Evaluation;
 import weka.classifiers.lazy.IBk;
@@ -21,7 +22,7 @@ public class Classification {
         String path = "set.csv";
         Instances data = loadDataSet(path);
         data.setClassIndex(data.numAttributes() - 1);
-        data.randomize(new Random(0L));
+        data.randomize(new Random(123));
 
         Instances trainSet = new Instances(data, 0, 100);
         Instances testSet = new Instances(data, 100, 33);
@@ -39,7 +40,7 @@ public class Classification {
         System.out.print("---------------------------------------------------------------------------\n");
         System.out.print("**************ЗАГРУЗКА МОДЕЛИ ИЗ ФАЙЛА************************\n");
 
-        IBk classifier = (IBk) loadModel("IBk1.model","IBk");
+        Classifier classifier = (Classifier) loadModel("IBk1.model");
         Evaluation eval = new Evaluation(trainSet);
         eval.evaluateModel(classifier, testSet);
         System.out.println(eval.toSummaryString());
@@ -47,7 +48,6 @@ public class Classification {
         int k = 0;
         for (int j = 0; j < testSet.numInstances(); ++j) {
             double res = classifier.classifyInstance(testSet.get(j));
-            //System.out.print(testSet.classAttribute().value((int) res) + "\n");
             String actual = testSet.classAttribute().value((int) testSet.instance(j).classValue());
             String prediction = testSet.classAttribute().value((int) res);
             System.out.printf(++k + ". \tActual: " + actual + " \tPredicted: " + prediction);
@@ -62,34 +62,13 @@ public class Classification {
         eval.crossValidateModel(classifier4, data, 10, new Random(1));*/
     }
 
-    public static void saveModel(String modelFile, IBk classifier) throws Exception {
+    public static void saveModel(String modelFile, Classifier classifier) throws Exception {
         weka.core.SerializationHelper.write(modelFile, classifier);
     }
 
-    public static void saveModel(String modelFile,J48 classifier) throws Exception {
-        weka.core.SerializationHelper.write(modelFile, classifier);
-    }
-
-    public static void saveModel(String modelFile,NaiveBayes classifier) throws Exception {
-        weka.core.SerializationHelper.write(modelFile, classifier);
-    }
-
-    public static CapabilitiesIgnorer loadModel(String modelFile, String modelType) throws Exception {
-        switch (modelType){
-            case "IBk":{
-                IBk classifier = (IBk) weka.core.SerializationHelper.read(modelFile);
-                return classifier;
-            }
-            case "J48":{
-                J48 classifier = (J48) weka.core.SerializationHelper.read(modelFile);
-                return classifier;
-            }
-            case "NaiveBayes":{
-                NaiveBayes classifier = (NaiveBayes) weka.core.SerializationHelper.read(modelFile);
-                return classifier;
-            }
-        }
-        return null;
+    public static CapabilitiesIgnorer loadModel(String modelFile) throws Exception {
+        Classifier classifier = (Classifier) weka.core.SerializationHelper.read(modelFile);
+                return (CapabilitiesIgnorer) classifier;
     }
 
     public static Instances loadDataSet(String path) throws Exception {
