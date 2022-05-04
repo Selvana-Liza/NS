@@ -6,11 +6,10 @@ import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.evaluation.Evaluation;
 import weka.classifiers.lazy.IBk;
 import weka.classifiers.trees.J48;
-import weka.core.Instance;
+import weka.core.CapabilitiesIgnorer;
 import weka.core.Instances;
 import weka.core.Utils;
 import weka.core.converters.CSVLoader;
-import weka.core.converters.ConverterUtils.DataSource;
 import weka.gui.treevisualizer.PlaceNode2;
 import weka.gui.treevisualizer.TreeVisualizer;
 
@@ -38,10 +37,59 @@ public class Classification {
         kNNClassifierBuild(trainSet,testSet);
 
         System.out.print("---------------------------------------------------------------------------\n");
+        System.out.print("**************ЗАГРУЗКА МОДЕЛИ ИЗ ФАЙЛА************************\n");
+
+        IBk classifier = (IBk) loadModel("IBk1.model","IBk");
+        Evaluation eval = new Evaluation(trainSet);
+        eval.evaluateModel(classifier, testSet);
+        System.out.println(eval.toSummaryString());
+
+        int k = 0;
+        for (int j = 0; j < testSet.numInstances(); ++j) {
+            double res = classifier.classifyInstance(testSet.get(j));
+            //System.out.print(testSet.classAttribute().value((int) res) + "\n");
+            String actual = testSet.classAttribute().value((int) testSet.instance(j).classValue());
+            String prediction = testSet.classAttribute().value((int) res);
+            System.out.printf(++k + ". \tActual: " + actual + " \tPredicted: " + prediction);
+            System.out.println(!prediction.equals(actual) ? "\t *" : "");
+        }
+
+        System.out.print("---------------------------------------------------------------------------\n");
+        System.out.print("***************************************************************************\n");
 
         //Cross-validation
         /*Evaluation eval = new Evaluation(data);
         eval.crossValidateModel(classifier4, data, 10, new Random(1));*/
+    }
+
+    public static void saveModel(String modelFile, IBk classifier) throws Exception {
+        weka.core.SerializationHelper.write(modelFile, classifier);
+    }
+
+    public static void saveModel(String modelFile,J48 classifier) throws Exception {
+        weka.core.SerializationHelper.write(modelFile, classifier);
+    }
+
+    public static void saveModel(String modelFile,NaiveBayes classifier) throws Exception {
+        weka.core.SerializationHelper.write(modelFile, classifier);
+    }
+
+    public static CapabilitiesIgnorer loadModel(String modelFile, String modelType) throws Exception {
+        switch (modelType){
+            case "IBk":{
+                IBk classifier = (IBk) weka.core.SerializationHelper.read(modelFile);
+                return classifier;
+            }
+            case "J48":{
+                J48 classifier = (J48) weka.core.SerializationHelper.read(modelFile);
+                return classifier;
+            }
+            case "NaiveBayes":{
+                NaiveBayes classifier = (NaiveBayes) weka.core.SerializationHelper.read(modelFile);
+                return classifier;
+            }
+        }
+        return null;
     }
 
     public static Instances loadDataSet(String path) throws Exception {
@@ -66,6 +114,8 @@ public class Classification {
         classifier.setOptions(weka.core.Utils.splitOptions("-K 1"));
         classifier.buildClassifier(trainSet);
         System.out.print(classifier.toString());
+
+        saveModel("IBk1.model",classifier);
 
         eval.evaluateModel(classifier, testSet);
         System.out.println(eval.toSummaryString());
@@ -92,6 +142,8 @@ public class Classification {
         classifier.buildClassifier(trainSet);
         System.out.print(classifier.toString());
 
+        saveModel("J48_1.model",classifier);
+
         eval.evaluateModel(classifier, testSet);
         System.out.println(eval.toSummaryString());
 
@@ -116,6 +168,8 @@ public class Classification {
         classifier.buildClassifier(trainSet);
         System.out.print(classifier.toString());
 
+        saveModel("NaiveBayes1.model",classifier);
+
         eval.evaluateModel(classifier, testSet);
         System.out.println(eval.toSummaryString());
 
@@ -129,24 +183,5 @@ public class Classification {
             System.out.printf(++k + ". \tActual: " + actual + " \tPredicted: " + prediction);
             System.out.println(!prediction.equals(actual) ? "\t *" : "");
         }
-    }
-
-    public static void visualizeTree(J48 classifier) throws Exception {
-        final JFrame jf = new JFrame();
-        jf.setSize(500,400);
-        jf.getContentPane().setLayout(new BorderLayout());
-        TreeVisualizer tv = new TreeVisualizer(null,
-                classifier.graph(),
-                new PlaceNode2());
-        jf.getContentPane().add(tv, BorderLayout.CENTER);
-        jf.addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowClosing(java.awt.event.WindowEvent e) {
-                jf.dispose();
-            }
-        });
-
-        jf.setVisible(true);
-        tv.fitToScreen();
-
     }
 }
