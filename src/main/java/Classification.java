@@ -18,14 +18,17 @@ import javax.swing.*;
 
 public class Classification {
 
+    private static Instances trainSet;
+    private static Instances testSet;
+
     public static void main(String[] args) throws Exception {
         String path = "set.csv";
         Instances data = loadDataSet(path);
         data.setClassIndex(data.numAttributes() - 1);
         data.randomize(new Random(123));
 
-        Instances trainSet = new Instances(data, 0, 100);
-        Instances testSet = new Instances(data, 100, 33);
+        trainSet = new Instances(data, 0, 100);
+        testSet = new Instances(data, 100, 33);
 
         //Standardize
         /*Standardize filter = new Standardize();
@@ -33,29 +36,19 @@ public class Classification {
         Instances trainSet = Filter.useFilter(trainSet, filter);  // configures the Filter based on train instances and returns filtered instances
         Instances testSet = Filter.useFilter(testSet, filter);    // create new test set*/
 
-        TreeClassifierBuild(trainSet,testSet);
-        NaiveBayesClassifierBuild(trainSet,testSet);
-        kNNClassifierBuild(trainSet,testSet);
+        TreeClassifierBuild();
+        NaiveBayesClassifierBuild();
+        kNNClassifierBuild();
 
-        System.out.print("---------------------------------------------------------------------------\n");
-        System.out.print("**************ЗАГРУЗКА МОДЕЛИ ИЗ ФАЙЛА************************\n");
+        System.out.print("\n---------------------------------------------------------------------------\n");
+        System.out.println("**************ЗАГРУЗКА МОДЕЛИ ИЗ ФАЙЛА************************\n");
 
         Classifier classifier = (Classifier) loadModel("IBk1.model");
-        Evaluation eval = new Evaluation(trainSet);
-        eval.evaluateModel(classifier, testSet);
-        System.out.println(eval.toSummaryString());
-
-        int k = 0;
-        for (int j = 0; j < testSet.numInstances(); ++j) {
-            double res = classifier.classifyInstance(testSet.get(j));
-            String actual = testSet.classAttribute().value((int) testSet.instance(j).classValue());
-            String prediction = testSet.classAttribute().value((int) res);
-            System.out.printf(++k + ". \tActual: " + actual + " \tPredicted: " + prediction);
-            System.out.println(!prediction.equals(actual) ? "\t *" : "");
-        }
+        System.out.print(classifier.toString());
+        getEvaluation(classifier);
 
         System.out.print("---------------------------------------------------------------------------\n");
-        System.out.print("***************************************************************************\n");
+        System.out.println("***************************************************************************\n");
 
         //Cross-validation
         /*Evaluation eval = new Evaluation(data);
@@ -85,82 +78,53 @@ public class Classification {
         return data;
     }
 
-    private static void kNNClassifierBuild(Instances trainSet, Instances testSet) throws Exception {
-        System.out.print("-----------------------------kNN-CLASSIFIER--------------------------------\n");
-
+    public static void getEvaluation(Classifier classifier) throws Exception {
         Evaluation eval = new Evaluation(trainSet);
+        eval.evaluateModel(classifier, testSet);
+        System.out.println(eval.toSummaryString());
+
+        int k = 0;
+        for (int j = 0; j < testSet.numInstances(); ++j) {
+            double res = classifier.classifyInstance(testSet.get(j));
+            String actual = testSet.classAttribute().value((int) testSet.instance(j).classValue());
+            String prediction = testSet.classAttribute().value((int) res);
+            System.out.printf(++k + ". \tActual: " + actual + " \tPredicted: " + prediction);
+            System.out.println(!prediction.equals(actual) ? "\t *" : "");
+        }
+    }
+
+    private static void kNNClassifierBuild() throws Exception {
+        System.out.println("\n-----------------------------kNN-CLASSIFIER--------------------------------\n");
+
         IBk classifier = new IBk();
         classifier.setOptions(weka.core.Utils.splitOptions("-K 1"));
         classifier.buildClassifier(trainSet);
         System.out.print(classifier.toString());
 
         saveModel("IBk1.model",classifier);
-
-        eval.evaluateModel(classifier, testSet);
-        System.out.println(eval.toSummaryString());
-
-
-        System.out.print("*******************************************************************\n");
-        int k = 0;
-        for (int j = 0; j < testSet.numInstances(); ++j) {
-            double res = classifier.classifyInstance(testSet.get(j));
-            //System.out.print(testSet.classAttribute().value((int) res) + "\n");
-            String actual = testSet.classAttribute().value((int) testSet.instance(j).classValue());
-            String prediction = testSet.classAttribute().value((int) res);
-            System.out.printf(++k + ". \tActual: " + actual + "\t  Predicted: " + prediction);
-            System.out.println(!prediction.equals(actual) ? " *" : "");
-        }
+        getEvaluation(classifier);
     }
 
-    private static void TreeClassifierBuild(Instances trainSet, Instances testSet) throws Exception {
-        System.out.print("-----------------------------TREE-CLASSIFIER-------------------------------\n");
+    private static void TreeClassifierBuild() throws Exception {
+        System.out.println("\n-----------------------------TREE-CLASSIFIER-------------------------------\n");
 
-        Evaluation eval = new Evaluation(trainSet);
         J48 classifier = new J48();
         classifier.setOptions(Utils.splitOptions("-C 0.1"));
         classifier.buildClassifier(trainSet);
         System.out.print(classifier.toString());
 
         saveModel("J48_1.model",classifier);
-
-        eval.evaluateModel(classifier, testSet);
-        System.out.println(eval.toSummaryString());
-
-        System.out.print("*******************************************************************\n");
-        int k = 0;
-        for (int j = 0; j < testSet.numInstances(); ++j) {
-            double res = classifier.classifyInstance(testSet.get(j));
-            //System.out.print(testSet.classAttribute().value((int) res) + "\n");
-            String actual = testSet.classAttribute().value((int) testSet.instance(j).classValue());
-            String prediction = testSet.classAttribute().value((int) res);
-            System.out.printf(++k + ". \tActual: " + actual + "\t  Predicted: " + prediction);
-            System.out.println(!prediction.equals(actual) ? " *" : "");
-        }
-        //visualizeTree(classifier);
+        getEvaluation(classifier);
     }
 
-    private static void NaiveBayesClassifierBuild(Instances trainSet, Instances testSet) throws Exception {
-        System.out.print("-------------------------NAIVE-BAYES-CLASSIFIER----------------------------\n");
+    private static void NaiveBayesClassifierBuild() throws Exception {
+        System.out.println("\n-------------------------NAIVE-BAYES-CLASSIFIER----------------------------\n");
 
-        Evaluation eval = new Evaluation(trainSet);
         NaiveBayes classifier = new NaiveBayes();
         classifier.buildClassifier(trainSet);
         System.out.print(classifier.toString());
 
         saveModel("NaiveBayes1.model",classifier);
-
-        eval.evaluateModel(classifier, testSet);
-        System.out.println(eval.toSummaryString());
-
-        System.out.print("*******************************************************************\n");
-        int k = 0;
-        for (int j = 0; j < testSet.numInstances(); ++j) {
-            double res = classifier.classifyInstance(testSet.get(j));
-            //System.out.print(testSet.classAttribute().value((int) res) + "\n");
-            String actual = testSet.classAttribute().value((int) testSet.instance(j).classValue());
-            String prediction = testSet.classAttribute().value((int) res);
-            System.out.printf(++k + ". \tActual: " + actual + " \tPredicted: " + prediction);
-            System.out.println(!prediction.equals(actual) ? "\t *" : "");
-        }
+        getEvaluation(classifier);
     }
 }
