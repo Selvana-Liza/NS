@@ -21,6 +21,8 @@ import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
 import org.nd4j.linalg.learning.config.Sgd;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
+import java.io.File;
+
 public class dl4jClassification {
     private static final int labelIndex = 50;     //сколько значений в каждой строке CSV-файла
     private static final int numClasses = 10;     //сколько классов в наборе данных
@@ -85,7 +87,11 @@ public class dl4jClassification {
         for(int i=0; i<nEpoch; i++ ) {
             model.fit(trainingData);
         }
-               //оцениваем модель на тестовом наборе
+
+        //сохранение модели в файл
+        model.save(new File("dl4j.model"));
+
+        //оцениваем модель на тестовом наборе
         Evaluation eval = new Evaluation(10);
         INDArray output = model.output(testData.getFeatures());
         eval.eval(testData.getLabels(), output);
@@ -100,6 +106,29 @@ public class dl4jClassification {
         for(int i = 0;i<output.rows();i++) {
             String actual = String.valueOf(testData.get(i).outcome());
             String prediction = String.valueOf(output.getRow(i).argMax());
+            System.out.printf((i+1) + ". Actual: " + actual + "  Predicted: " + prediction);
+            System.out.println(!prediction.equals(actual) ? " *" : "");
+        }
+
+
+        System.out.print("---------------------------------------------------------------------------\n");
+        System.out.print("**************ЗАГРУЗКА МОДЕЛИ ИЗ ФАЙЛА************************\n");
+        //Загрузка модели из файла
+        MultiLayerNetwork modelLoad = MultiLayerNetwork.load(new File("dl4j.model"),true);
+        Evaluation eval1 = new Evaluation(10);
+        INDArray output1 = modelLoad.output(testData.getFeatures());
+        eval1.eval(testData.getLabels(), output);
+
+
+        System.out.println(eval1.stats()); //confusion matrix, evaluation metrics
+        System.out.println("-----------------------------------");
+        System.out.println(eval1.confusionToString());
+        System.out.println("-----------------------------------");
+        System.out.println(output1);
+        System.out.println("-----------------------------------");
+        for(int i = 0;i<output1.rows();i++) {
+            String actual = String.valueOf(testData.get(i).outcome());
+            String prediction = String.valueOf(output1.getRow(i).argMax());
             System.out.printf((i+1) + ". Actual: " + actual + "  Predicted: " + prediction);
             System.out.println(!prediction.equals(actual) ? " *" : "");
         }
