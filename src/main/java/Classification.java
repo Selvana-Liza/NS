@@ -22,10 +22,11 @@ public class Classification {
 
     private static Instances trainSet;
     private static Instances testSet;
+    private static Instances data;
 
     public static void main(String[] args) throws Exception {
         String path = "set.csv";
-        Instances data = loadDataSet(path);
+        data = loadDataSet(path);
         data.setClassIndex(data.numAttributes() - 1);
         data.randomize(new Random(123));
 
@@ -45,10 +46,6 @@ public class Classification {
 
         System.out.print("---------------------------------------------------------------------------\n");
         System.out.println("***************************************************************************\n");
-
-        //Cross-validation
-        /*Evaluation eval = new Evaluation(data);
-        eval.crossValidateModel(classifier4, data, 10, new Random(1));*/
     }
 
     public static void saveModel(String modelFile, Classifier classifier) throws Exception {
@@ -87,6 +84,12 @@ public class Classification {
             System.out.printf(++k + ". \tActual: " + actual + " \tPredicted: " + prediction);
             System.out.println(!prediction.equals(actual) ? "\t *" : "");
         }
+    }
+
+    public static void getCrossValidation(Classifier classifier) throws Exception {
+        //Cross-validation
+        Evaluation eval = new Evaluation(data);
+        eval.crossValidateModel(classifier, data, 10, new Random(1));
     }
 
     private static void kNNClassifierBuild() throws Exception {
