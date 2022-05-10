@@ -25,13 +25,20 @@ public class Classification {
     private static Instances data;
 
     public static void main(String[] args) throws Exception {
-        String path = "set.csv";
-        data = loadDataSet(path);
+        data = loadDataSet("set.csv");
         data.setClassIndex(data.numAttributes() - 1);
-        data.randomize(new Random(123));
+        data.randomize(new Random(123456789));
 
         trainSet = new Instances(data, 0, 100);
-        testSet = new Instances(data, 100, 33);
+        testSet = new Instances(data, 100, 20);
+
+//        trainSet =loadDataSet("trainset.csv");
+//        trainSet.setClassIndex(trainSet.numAttributes() - 1);
+//        trainSet.randomize(new Random(123));
+//
+//        testSet =loadDataSet("testdataset.csv");
+//        testSet.setClassIndex(testSet.numAttributes() - 1);
+//        testSet.randomize(new Random(123));
 
         TreeClassifierBuild();
         NaiveBayesClassifierBuild();
@@ -40,23 +47,24 @@ public class Classification {
         System.out.print("\n---------------------------------------------------------------------------\n");
         System.out.println("**************ЗАГРУЗКА МОДЕЛИ ИЗ ФАЙЛА************************\n");
 
-        Classifier classifier = (Classifier) loadModel("IBk1.model");
-        System.out.print(classifier.toString());
-        getEvaluation(classifier);
+        getEvaluation((Classifier) loadModel("IBk1.model"));
 
         System.out.print("---------------------------------------------------------------------------\n");
         System.out.println("***************************************************************************\n");
     }
 
+    //Сохранение модели
     public static void saveModel(String modelFile, Classifier classifier) throws Exception {
         weka.core.SerializationHelper.write(modelFile, classifier);
     }
 
+    //Загрузка модели
     public static CapabilitiesIgnorer loadModel(String modelFile) throws Exception {
         Classifier classifier = (Classifier) weka.core.SerializationHelper.read(modelFile);
                 return (CapabilitiesIgnorer) classifier;
     }
 
+    //Загрузка датасета
     public static Instances loadDataSet(String path) throws Exception {
         CSVLoader loader = new CSVLoader();
         loader.setSource(new File(path));
@@ -71,6 +79,7 @@ public class Classification {
         return data;
     }
 
+    //Тестовая выборка и вывод результата
     public static void getEvaluation(Classifier classifier) throws Exception {
         Evaluation eval = new Evaluation(trainSet);
         eval.evaluateModel(classifier, testSet);
@@ -98,7 +107,7 @@ public class Classification {
         IBk classifier = new IBk();
         classifier.setOptions(weka.core.Utils.splitOptions("-K 1"));
         classifier.buildClassifier(trainSet);
-        System.out.print(classifier.toString());
+        //System.out.print(classifier.toString());
 
         saveModel("IBk1.model",classifier);
         getEvaluation(classifier);
@@ -110,7 +119,7 @@ public class Classification {
         J48 classifier = new J48();
         classifier.setOptions(Utils.splitOptions("-C 0.1"));
         classifier.buildClassifier(trainSet);
-        System.out.print(classifier.toString());
+        //System.out.print(classifier.toString());
 
         saveModel("J48_1.model",classifier);
         getEvaluation(classifier);
@@ -121,7 +130,7 @@ public class Classification {
 
         NaiveBayes classifier = new NaiveBayes();
         classifier.buildClassifier(trainSet);
-        System.out.print(classifier.toString());
+        //System.out.print(classifier.toString());
 
         saveModel("NaiveBayes1.model",classifier);
         getEvaluation(classifier);

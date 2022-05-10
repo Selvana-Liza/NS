@@ -35,29 +35,20 @@ import java.util.Date;
 import static weka.clusterers.HierarchicalClusterer.TAGS_LINK_TYPE;
 
 public class Cluster {
+    private static Instances data;
+    private static Instances dataClusterer;
 
     public static void main(String[] args) throws Exception {
-        String path = "set.csv";
-        Instances data = loadDataSet(path);
+        data = loadDataSet("set.csv");
         weka.filters.unsupervised.attribute.Remove filter = new weka.filters.unsupervised.attribute.Remove();
         filter.setAttributeIndices("" + (data.classIndex() + 1));
         filter.setInputFormat(data);
-        Instances dataClusterer = Filter.useFilter(data, filter);
+        dataClusterer = Filter.useFilter(data, filter);
 
-        EMClusterBuild(dataClusterer,data);
-        kMeansClusterBuild(dataClusterer,data);
-        CobwebClusterBuild(dataClusterer,data);
-        HierarchicalClusterBuild(dataClusterer,data);
-
-
-
-        /*for (Instance instance : dataClusterer) {
-            System.out.printf("(%.0f,%.0f): %s%n",
-                    instance.value(0), instance.value(1),
-                    model.clusterInstance(instance));
-        }*/
-
-
+        EMClusterBuild();
+        kMeansClusterBuild();
+        CobwebClusterBuild();
+        HierarchicalClusterBuild();
     }
 
     public static Instances loadDataSet(String path) throws Exception {
@@ -73,7 +64,7 @@ public class Cluster {
         return data;
     }
 
-    public static void EMClusterBuild(Instances dataClusterer, Instances data) throws Exception {
+    public static void EMClusterBuild() throws Exception {
         System.out.println("-------------------------EM-cluster-----------------------\n");
 
         EM cluster = new EM();
@@ -88,7 +79,7 @@ public class Cluster {
         System.out.println(eval.clusterResultsToString());
     }
 
-    public static void kMeansClusterBuild(Instances dataClusterer, Instances data) throws Exception {
+    public static void kMeansClusterBuild() throws Exception {
         System.out.println("-------------------------KMeans-cluster-----------------------\n");
 
         SimpleKMeans cluster = new SimpleKMeans();
@@ -102,7 +93,7 @@ public class Cluster {
         System.out.println(eval.clusterResultsToString());
     }
 
-    public static void CobwebClusterBuild(Instances dataClusterer, Instances data) throws Exception {
+    public static void CobwebClusterBuild() throws Exception {
         System.out.println("-------------------------Cobweb-cluster-----------------------\n");
 
         Cobweb cluster = new Cobweb();
@@ -114,7 +105,7 @@ public class Cluster {
         System.out.println("# of clusters: " + eval.getNumClusters());  // output # of clusters
         System.out.println(eval.clusterResultsToString());
     }
-    public static void HierarchicalClusterBuild(Instances dataClusterer, Instances data) throws Exception {
+    public static void HierarchicalClusterBuild() throws Exception {
         System.out.println("-------------------------Hierarchical-Cluster-----------------------\n");
 
         HierarchicalClusterer hc = new HierarchicalClusterer();
@@ -126,47 +117,5 @@ public class Cluster {
         eval.evaluateClusterer(data);                                // data to evaluate the clusterer on
         System.out.println("# of clusters: " + eval.getNumClusters());  // output # of clusters
         System.out.println(eval.clusterResultsToString());
-        //displayDendrogram(hc.graph());
     }
-
-    public static void displayDendrogram(String graph) {
-        JFrame frame = new JFrame("Dendrogram");
-        frame.setSize(500, 400);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        Container pane = frame.getContentPane();
-        pane.setLayout(new BorderLayout());
-        pane.add(new HierarchyVisualizer(graph));
-        frame.setVisible(true);
-    }
-
-    /*public static void visualizeCluster(Instances train,Cluster cluster, Evaluation eval) throws Exception {
-        PlotData2D predData = ClustererPanel.setUpVisualizableInstances(train, eval);
-        String name = (new SimpleDateFormat("HH:mm:ss - ")).format(new Date());
-        String cname = cluster.getClass().getName();
-        if (cname.startsWith("weka.clusterers."))
-            name += cname.substring("weka.clusterers.".length());
-        else
-            name += cname;
-
-        VisualizePanel vp = new VisualizePanel();
-        vp.setName(name + " (" + train.relationName() + ")");
-        predData.setPlotName(name + " (" + train.relationName() + ")");
-        vp.addPlot(predData);
-
-        // display data
-        // taken from: ClustererPanel.visualizeClusterAssignments(VisualizePanel)
-        String plotName = vp.getName();
-        final JFrame jf =
-                new JFrame("Weka Clusterer Visualize: " + plotName);
-        jf.setSize(500,400);
-        jf.getContentPane().setLayout(new BorderLayout());
-        jf.getContentPane().add(vp, BorderLayout.CENTER);
-        jf.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                jf.dispose();
-            }
-        });
-        jf.setVisible(true);
-    }*/
-
 }

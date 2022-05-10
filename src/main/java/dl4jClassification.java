@@ -26,7 +26,7 @@ import java.io.File;
 public class dl4jClassification {
     private static final int labelIndex = 50;       //сколько значений в каждой строке CSV-файла
     private static final int numClasses = 10;       //сколько классов в наборе данных
-    private static final int batchSize = 133;       //сколько всего примеров
+    private static final int batchSize = 120;       //сколько всего примеров
     private static final int numInputs = 50;        //колво-нейронов входной слой
     private static final int numHiddenLayers = 5;   //колво-нейронов скрытый слой
     private static final int numOutput = 10;        //колво-нейронов выходной слой
@@ -35,19 +35,31 @@ public class dl4jClassification {
 
     public static void main(String[] args) throws Exception {
         RecordReader recordReader = new CSVRecordReader(1, ',');
-        recordReader.initialize(new FileSplit(
-                    new ClassPathResource("setDL.csv").getFile()));
+        recordReader.initialize(new FileSplit(new ClassPathResource("trainsetDL.csv").getFile()));
+
+        RecordReader recordReader2 = new CSVRecordReader(1, ',');
+        recordReader2.initialize(new FileSplit(new ClassPathResource("testdatasetDL.csv").getFile()));
+
+        RecordReader recordReader3 = new CSVRecordReader(1, ',');
+        recordReader3.initialize(new FileSplit(new ClassPathResource("setDL.csv").getFile()));
 
         //DataSetIterator управляет обходом набора данных и подготовкой данные для нейронной сети.
-        DataSetIterator iterator = new RecordReaderDataSetIterator(recordReader,batchSize,labelIndex,numClasses);
+        DataSetIterator iterator = new RecordReaderDataSetIterator(recordReader3,batchSize,labelIndex,numClasses);
         DataSet allData = iterator.next();
         //Перетасовать набор данных, чтобы избавиться от порядка классов в исходном файле
-        allData.shuffle(123);
+        allData.shuffle(123456789);
         //Разделяем выборку на тестовую и обучающую в соответсвии 75% на обучение
         SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.75);
         //Получаем тестовую и обучающую выборки
         DataSet trainingData = testAndTrain.getTrain();
         DataSet testData = testAndTrain.getTest();
+
+//        DataSetIterator iterator = new RecordReaderDataSetIterator(recordReader,88,labelIndex,numClasses);
+//        DataSet trainingData = iterator.next();
+//
+//        DataSetIterator iterator2 = new RecordReaderDataSetIterator(recordReader2,32,labelIndex,numClasses);
+//        DataSet testData = iterator2.next();
+
 
         //Нормализация данных
         DataNormalization normalizer = new NormalizerStandardize();
@@ -60,7 +72,7 @@ public class dl4jClassification {
 
 
         //ПОСТРОЕНИЕ МОДЕЛИ
-        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+        MultiLayerConfiguration conf1 = new NeuralNetConfiguration.Builder()
                 .seed(seed)
                 .activation(Activation.TANH)
                 .weightInit(WeightInit.XAVIER)
@@ -77,31 +89,64 @@ public class dl4jClassification {
                         .nIn(numHiddenLayers).nOut(numOutput).build())
                 .build();
 
+        //ПОСТРОЕНИЕ МОДЕЛИ
+        MultiLayerConfiguration conf2 = new NeuralNetConfiguration.Builder()
+                .seed(seed)
+                .activation(Activation.TANH)
+                .weightInit(WeightInit.XAVIER)
+                .updater(new Sgd(0.1))
+                .l2(1e-4)
+                .list()
+                .layer(0, new DenseLayer.Builder().nIn(numInputs).nOut(25)
+                        .build())
+                .layer(1, new DenseLayer.Builder().nIn(25).nOut(15)
+                        .build())
+                .layer(2, new DenseLayer.Builder().nIn(15).nOut(numHiddenLayers)
+                        .build())
+                .layer(3, new DenseLayer.Builder().nIn(numHiddenLayers).nOut(numHiddenLayers)
+                        .build())
+                .layer(4, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                        //Переопределить глобальную активацию TANH с помощью softmax для этого слоя
+                        .activation(Activation.SOFTMAX)
+                        .nIn(numHiddenLayers).nOut(numOutput).build())
+                .build();
+
         //Инициализация модели
-        MultiLayerNetwork model = new MultiLayerNetwork(conf);
+        MultiLayerNetwork model = new MultiLayerNetwork(conf1);
         model.init();
         //Записываем оценку один раз каждые 100 итераций
         model.setListeners(new ScoreIterationListener(100));
-
         for(int i=0; i<nEpoch; i++ ) {
             model.fit(trainingData);
         }
-
         //Сохранение модели в файл
         model.save(new File("dl4j.model"));
-
         getEvaluation(model,testData);
+
+        System.out.print("---------------------------------------------------------------------------\n");
+        System.out.print("**************Модель 2************************\n");
+
+        //Инициализация модели
+        MultiLayerNetwork model2 = new MultiLayerNetwork(conf2);
+        model2.init();
+        //Записываем оценку один раз каждые 100 итераций
+        model2.setListeners(new ScoreIterationListener(100));
+        for(int i=0; i<nEpoch; i++ ) {
+            model2.fit(trainingData);
+        }
+        getEvaluation(model2,testData);
+
+
+
 
         System.out.print("---------------------------------------------------------------------------\n");
         System.out.print("**************ЗАГРУЗКА МОДЕЛИ ИЗ ФАЙЛА************************\n");
         //Загрузка модели из файла
-        MultiLayerNetwork modelLoad = MultiLayerNetwork.load(new File("dl4j.model"),true);
-
-        getEvaluation(modelLoad,testData);
+        getEvaluation(MultiLayerNetwork.load(new File("dl4j.model"),true),testData);
     }
 
 
-    //Метод для вывода результата обучения
+    //Метод для вывода результата обучения на тестовой выборке
     public static void getEvaluation(MultiLayerNetwork model, DataSet testData){
         //Оцениваем модель на тестовом наборе
         Evaluation eval = new Evaluation(10);
