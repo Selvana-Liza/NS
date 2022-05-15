@@ -8,6 +8,8 @@ import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.evaluation.Evaluation;
 import weka.classifiers.lazy.IBk;
 import weka.classifiers.trees.J48;
+import weka.classifiers.functions.MultilayerPerceptron;
+import weka.classifiers.trees.RandomForest;
 import weka.core.CapabilitiesIgnorer;
 import weka.core.Instances;
 import weka.core.Utils;
@@ -27,7 +29,7 @@ public class Classification {
     public static void main(String[] args) throws Exception {
         data = loadDataSet("set.csv");
         data.setClassIndex(data.numAttributes() - 1);
-        data.randomize(new Random(123456789));
+        data.randomize(new Random(6));
 
         trainSet = new Instances(data, 0, 100);
         testSet = new Instances(data, 100, 20);
@@ -43,11 +45,12 @@ public class Classification {
         TreeClassifierBuild();
         NaiveBayesClassifierBuild();
         kNNClassifierBuild();
+        RandomForestClassifierBuild();
 
         System.out.print("\n---------------------------------------------------------------------------\n");
         System.out.println("**************ЗАГРУЗКА МОДЕЛИ ИЗ ФАЙЛА************************\n");
 
-        getEvaluation((Classifier) loadModel("IBk1.model"));
+        //getEvaluation((Classifier) loadModel("IBk1.model"));
 
         System.out.print("---------------------------------------------------------------------------\n");
         System.out.println("***************************************************************************\n");
@@ -109,7 +112,7 @@ public class Classification {
         classifier.buildClassifier(trainSet);
         //System.out.print(classifier.toString());
 
-        saveModel("IBk1.model",classifier);
+        //saveModel("IBk1.model",classifier);
         getEvaluation(classifier);
     }
 
@@ -117,11 +120,22 @@ public class Classification {
         System.out.println("\n-----------------------------TREE-CLASSIFIER-------------------------------\n");
 
         J48 classifier = new J48();
-        classifier.setOptions(Utils.splitOptions("-C 0.1"));
+        //classifier.setOptions(Utils.splitOptions("-C 0.1"));
         classifier.buildClassifier(trainSet);
         //System.out.print(classifier.toString());
 
-        saveModel("J48_1.model",classifier);
+        //saveModel("J48_1.model",classifier);
+        getEvaluation(classifier);
+    }
+
+    private static void RandomForestClassifierBuild() throws Exception {
+        System.out.println("\n-----------------------------RandomForest-CLASSIFIER-------------------------------\n");
+
+        RandomForest classifier = new RandomForest();
+        classifier.buildClassifier(trainSet);
+        //System.out.print(classifier.toString());
+
+        //saveModel("RandomForest1.model",classifier);
         getEvaluation(classifier);
     }
 
@@ -132,7 +146,7 @@ public class Classification {
         classifier.buildClassifier(trainSet);
         //System.out.print(classifier.toString());
 
-        saveModel("NaiveBayes1.model",classifier);
+        //saveModel("NaiveBayes1.model",classifier);
         getEvaluation(classifier);
     }
 }
