@@ -1,24 +1,18 @@
-import java.awt.*;
 import java.io.File;
 import java.util.Random;
-
-import org.nd4j.linalg.api.ops.impl.transforms.custom.Standardize;
 import weka.classifiers.Classifier;
 import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.evaluation.Evaluation;
 import weka.classifiers.lazy.IBk;
 import weka.classifiers.trees.J48;
-import weka.classifiers.functions.MultilayerPerceptron;
 import weka.classifiers.trees.RandomForest;
 import weka.core.CapabilitiesIgnorer;
 import weka.core.Instances;
+import weka.core.SerializationHelper;
 import weka.core.Utils;
 import weka.core.converters.CSVLoader;
 import weka.filters.Filter;
-import weka.gui.treevisualizer.PlaceNode2;
-import weka.gui.treevisualizer.TreeVisualizer;
-
-import javax.swing.*;
+import weka.filters.unsupervised.attribute.Normalize;
 
 public class Classification {
 
@@ -29,10 +23,14 @@ public class Classification {
     public static void main(String[] args) throws Exception {
         data = loadDataSet("set.csv");
         data.setClassIndex(data.numAttributes() - 1);
-        data.randomize(new Random(6));
+        data.randomize(new Random(123456789));
 
-        trainSet = new Instances(data, 0, 100);
-        testSet = new Instances(data, 100, 20);
+
+        trainSet = new Instances(data, 0, 90);
+        testSet = new Instances(data, 90, 30);
+
+        trainSet = NormalizeDataSet(trainSet);
+        testSet = NormalizeDataSet(testSet);
 
 //        trainSet =loadDataSet("trainset.csv");
 //        trainSet.setClassIndex(trainSet.numAttributes() - 1);
@@ -42,9 +40,9 @@ public class Classification {
 //        testSet.setClassIndex(testSet.numAttributes() - 1);
 //        testSet.randomize(new Random(123));
 
-        TreeClassifierBuild();
-        NaiveBayesClassifierBuild();
-        kNNClassifierBuild();
+//        TreeClassifierBuild();
+//        NaiveBayesClassifierBuild();
+//        kNNClassifierBuild();
         RandomForestClassifierBuild();
 
         System.out.print("\n---------------------------------------------------------------------------\n");
@@ -58,12 +56,12 @@ public class Classification {
 
     //Сохранение модели
     public static void saveModel(String modelFile, Classifier classifier) throws Exception {
-        weka.core.SerializationHelper.write(modelFile, classifier);
+        SerializationHelper.write(modelFile, classifier);
     }
 
     //Загрузка модели
     public static CapabilitiesIgnorer loadModel(String modelFile) throws Exception {
-        Classifier classifier = (Classifier) weka.core.SerializationHelper.read(modelFile);
+        Classifier classifier = (Classifier) SerializationHelper.read(modelFile);
                 return (CapabilitiesIgnorer) classifier;
     }
 
@@ -74,12 +72,18 @@ public class Classification {
         Instances data = loader.getDataSet();
         data.setClassIndex(data.numAttributes() - 1);
 
-        /*DataSource source = new DataSource(path);
-        Instances data = source.getDataSet();
-        if (data.classIndex() == -1) {
-            data.setClassIndex(data.numAttributes() - 1);
-        }*/
+//        DataSource source = new DataSource(path);
+//        Instances data = source.getDataSet();
+//        if (data.classIndex() == -1) {
+//            data.setClassIndex(data.numAttributes() - 1);
+//        }
         return data;
+    }
+
+    public static Instances NormalizeDataSet(Instances set) throws Exception {
+        Filter normalization = new Normalize();
+        normalization.setInputFormat(set);
+        return Filter.useFilter(set, normalization);
     }
 
     //Тестовая выборка и вывод результата
@@ -87,6 +91,8 @@ public class Classification {
         Evaluation eval = new Evaluation(trainSet);
         eval.evaluateModel(classifier, testSet);
         System.out.println(eval.toSummaryString());
+        System.out.println(eval.toMatrixString());
+        //System.out.println(eval.toClassDetailsString());
 
         int k = 0;
         for (int j = 0; j < testSet.numInstances(); ++j) {
@@ -108,7 +114,7 @@ public class Classification {
         System.out.println("\n-----------------------------kNN-CLASSIFIER--------------------------------\n");
 
         IBk classifier = new IBk();
-        classifier.setOptions(weka.core.Utils.splitOptions("-K 1"));
+        classifier.setOptions(Utils.splitOptions("-K 1"));
         classifier.buildClassifier(trainSet);
         //System.out.print(classifier.toString());
 
@@ -120,7 +126,7 @@ public class Classification {
         System.out.println("\n-----------------------------TREE-CLASSIFIER-------------------------------\n");
 
         J48 classifier = new J48();
-        //classifier.setOptions(Utils.splitOptions("-C 0.1"));
+        classifier.setOptions(Utils.splitOptions("-C 0.1"));
         classifier.buildClassifier(trainSet);
         //System.out.print(classifier.toString());
 
@@ -132,6 +138,7 @@ public class Classification {
         System.out.println("\n-----------------------------RandomForest-CLASSIFIER-------------------------------\n");
 
         RandomForest classifier = new RandomForest();
+        classifier.setOptions(Utils.splitOptions("-I 1000"));
         classifier.buildClassifier(trainSet);
         //System.out.print(classifier.toString());
 
