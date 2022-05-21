@@ -40,9 +40,9 @@ public class Classification {
 //        testSet.setClassIndex(testSet.numAttributes() - 1);
 //        testSet.randomize(new Random(123));
 
-//        TreeClassifierBuild();
-//        NaiveBayesClassifierBuild();
-//        kNNClassifierBuild();
+        TreeClassifierBuild();
+        NaiveBayesClassifierBuild();
+        kNNClassifierBuild();
         RandomForestClassifierBuild();
 
         System.out.print("\n---------------------------------------------------------------------------\n");
@@ -92,7 +92,7 @@ public class Classification {
         eval.evaluateModel(classifier, testSet);
         System.out.println(eval.toSummaryString());
         System.out.println(eval.toMatrixString());
-        //System.out.println(eval.toClassDetailsString());
+        System.out.println(eval.toClassDetailsString());
 
         int k = 0;
         for (int j = 0; j < testSet.numInstances(); ++j) {
@@ -111,7 +111,7 @@ public class Classification {
     }
 
     private static void kNNClassifierBuild() throws Exception {
-        System.out.println("\n-----------------------------kNN-CLASSIFIER--------------------------------\n");
+        System.out.print("\n-----------------------------kNN-CLASSIFIER--------------------------------");
 
         IBk classifier = new IBk();
         classifier.setOptions(Utils.splitOptions("-K 1"));
@@ -123,7 +123,7 @@ public class Classification {
     }
 
     private static void TreeClassifierBuild() throws Exception {
-        System.out.println("\n-----------------------------TREE-CLASSIFIER-------------------------------\n");
+        System.out.print("\n-----------------------------TREE-CLASSIFIER-------------------------------");
 
         J48 classifier = new J48();
         classifier.setOptions(Utils.splitOptions("-C 0.1"));
@@ -135,7 +135,7 @@ public class Classification {
     }
 
     private static void RandomForestClassifierBuild() throws Exception {
-        System.out.println("\n-----------------------------RandomForest-CLASSIFIER-------------------------------\n");
+        System.out.print("\n-----------------------------RandomForest-CLASSIFIER------------------------");
 
         RandomForest classifier = new RandomForest();
         classifier.setOptions(Utils.splitOptions("-I 1000"));
@@ -147,7 +147,7 @@ public class Classification {
     }
 
     private static void NaiveBayesClassifierBuild() throws Exception {
-        System.out.println("\n-------------------------NAIVE-BAYES-CLASSIFIER----------------------------\n");
+        System.out.print("\n-------------------------NAIVE-BAYES-CLASSIFIER----------------------------");
 
         NaiveBayes classifier = new NaiveBayes();
         classifier.buildClassifier(trainSet);
